@@ -8,7 +8,7 @@
 
 # ### Load the libraries
 
-# In[13]:
+# In[1]:
 
 
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile, schedule, transpiler
@@ -164,7 +164,7 @@ def get_transpiled_circuit(num_blocks, backend,
 
 # Select the positive or negative $a$ array depending on the case.
 
-# In[70]:
+# In[83]:
 
 
 max_time   = 15 # In microseconds.
@@ -197,7 +197,7 @@ reshape_dims = (len(a), repetitions, num_sequences, num_steps)
 
 # ### Build the circuits
 
-# In[8]:
+# In[ ]:
 
 
 all_wait_times = []
@@ -332,7 +332,7 @@ all_counts_array = np.array([results.get_counts(i) for i in range(len(all_transp
 
 # For the positive $a$ case:
 
-# In[63]:
+# In[85]:
 
 
 all_counts_array = np.load("all_counts_array-positive_ab_Landscape-15us_30steps_10reps_4seqs_Q3Q4.npy", allow_pickle=True)
@@ -340,7 +340,7 @@ all_counts_array = np.load("all_counts_array-positive_ab_Landscape-15us_30steps_
 
 # For the negative $a$ case:
 
-# In[67]:
+# In[54]:
 
 
 all_counts_array = np.load("all_counts_array-negative_ab_Landscape-15us_30steps_10reps_4seqs_Q3Q4.npy", allow_pickle=True)
@@ -348,7 +348,7 @@ all_counts_array = np.load("all_counts_array-negative_ab_Landscape-15us_30steps_
 
 # ### Reshape the counts to facilitate working with them
 
-# In[68]:
+# In[ ]:
 
 
 """
@@ -368,7 +368,7 @@ reshaped_counts
 
 # Define a funtion for converting counts to fidelity
 
-# In[11]:
+# In[56]:
 
 
 def get_fidelity_data(sequence, a, reshaped_counts, repetitions, shots, num_steps):
@@ -403,7 +403,7 @@ def get_fidelity_data(sequence, a, reshaped_counts, repetitions, shots, num_step
 
 # #### Use this cell for the positive $a$ case
 
-# In[65]:
+# In[88]:
 
 
 # Get colormap limits
@@ -427,7 +427,8 @@ vmin_err = np.min([get_fidelity_data(sequence, a, reshaped_counts, repetitions, 
 
 # From both cases use the maximum and minimum values as limits equal for both cases
 vmin, vmax = 0.29893798828125, 0.9607666015625 # vmin from a>0, vmax from a<0
-vmin_err, vmax_err = 0.0030517578125, 0.4462890625 # vmin_err from a<0, vmax_err from a>0
+# Fidelity error amplitude colormap limits
+vmin_err, vmax_err = 0.0052490234375, 0.4462890625 # # Both vmin_err and vmax_err from a<0
 
 
 # Initialize the figure and the axes
@@ -454,8 +455,8 @@ for col in range(4): # For each sequence
     F, F_err = get_fidelity_data(col, a, reshaped_counts, repetitions, shots, num_steps) # sequence index = column number (col)
     
     # Plot the 2d data
-    myplot  = ax.imshow(np.asarray(F).T, extent=[-da/2,1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="bwr_r", vmin=vmin, vmax=vmax) # bwr_r, seismic_r, gist_heat, terrain_r, twilight_shifted_r
-    myplot2 = ax2.imshow(np.asarray(F_err).T, extent=[-da/2,1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="magma", vmin=vmin_err, vmax=vmax_err)
+    myplot  = ax.imshow(np.asarray(F).T, extent=[-da/2,1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="RdBu", vmin=vmin, vmax=vmax) # bwr_r, seismic_r, gist_heat, terrain_r, twilight_shifted_r
+    myplot2 = ax2.imshow(np.asarray(F_err).T, extent=[-da/2,1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="RdBu_r", vmin=vmin_err, vmax=vmax_err)
     
     # Generate the interpolated data for creating the smooth qualitative contours
     zoom_factor = 8
@@ -473,10 +474,13 @@ for col in range(4): # For each sequence
     clbls = ax.clabel(ct, inline=1, fontsize=11)
     plt.setp(clbls, path_effects=[patheffects.withStroke(linewidth=3, foreground="w")]) # Add white edge to labels
     # The bottom row contour lines
-    ct = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="w", alpha=1, linewidths=2, levels=[0.0, 0.1, 0.2, 0.3, 0.4])
+    ct_white = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="w", alpha=0.8, linewidths=4, levels=[0.0, 0.1, 0.2, 0.4])
+    ct = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="k", alpha=1, linewidths=1, levels=[0.0, 0.1, 0.2, 0.4])
     # Bottom row contour labels
+    ax2.clabel(ct_white, inline=1, fontsize=11)
     clbls = ax2.clabel(ct, inline=1, fontsize=11)
-    
+    plt.setp(clbls, path_effects=[patheffects.withStroke(linewidth=3, foreground="w")]) # Add white edge to labels
+
     ax2.set_xlabel("$a$", fontsize=labels_fs)
     
     if col==0:
@@ -497,13 +501,13 @@ for col in range(4): # For each sequence
         cbar  = fig.colorbar(myplot, ax=ax, fraction=0.05, pad=0.04).set_label("Fidelity", size=cbars_fs) #https://stackoverflow.com/a/26720422
         cbar2 = fig.colorbar(myplot2, ax=ax2, fraction=0.05, pad=0.04).set_label("Fidelity error amplitude", size=cbars_fs)
         
-plt.show()
-#plt.savefig(r"landscapePosTwoQubit.pdf")  
+#plt.show()
+plt.savefig(r"landscapePosTwoQubit.pdf")  
 
 
 # #### Use this cell for the negative $a$ case
 
-# In[69]:
+# In[82]:
 
 
 # Get colormap limits
@@ -527,7 +531,8 @@ vmin_err = np.min([get_fidelity_data(sequence, a, reshaped_counts, repetitions, 
 
 # From both cases use the maximum and minimum values as limits equal for both cases
 vmin, vmax = 0.29893798828125, 0.9607666015625 # vmin from a>0, vmax from a<0
-vmin_err, vmax_err = 0.0030517578125, 0.4462890625 # vmin_err from a<0, vmax_err from a>0
+# Fidelity error amplitude colormap limits
+vmin_err, vmax_err = 0.0030517578125, 0.1575927734375 # Both vmin_err and vmax_err from a<0
 
 
 # Initialize the figure and the axes
@@ -554,8 +559,8 @@ for col in range(4): # For each sequence
     F, F_err = get_fidelity_data(col, a, reshaped_counts, repetitions, shots, num_steps) # sequence index = column number (col)
     
     # Plot the 2d data
-    myplot  = ax.imshow(np.asarray(F).T, extent=[-da/2,-1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="bwr_r", vmin=vmin, vmax=vmax) # bwr_r, seismic_r, gist_heat, terrain_r, twilight_shifted_r
-    myplot2 = ax2.imshow(np.asarray(F_err).T, extent=[-da/2,-1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="magma", vmin=vmin_err, vmax=vmax_err)
+    myplot  = ax.imshow(np.asarray(F).T, extent=[-da/2,-1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="RdBu", vmin=vmin, vmax=vmax) # bwr_r, seismic_r, gist_heat, terrain_r, twilight_shifted_r
+    myplot2 = ax2.imshow(np.asarray(F_err).T, extent=[-da/2,-1+da/2,15+dt/2,-dt/2], aspect=1/15, cmap="RdBu_r", vmin=vmin_err, vmax=vmax_err)
     
     # Generate the interpolated data for creating the smooth qualitative contours
     zoom_factor = 8
@@ -573,9 +578,12 @@ for col in range(4): # For each sequence
     clbls = ax.clabel(ct, inline=1, fontsize=11)
     plt.setp(clbls, path_effects=[patheffects.withStroke(linewidth=3, foreground="w")]) # Add white edge to labels
     # The bottom row contour lines
-    ct = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="w", alpha=1, linewidths=2, levels=[0.0, 0.1, 0.2, 0.3, 0.4])
+    ct_white = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="w", alpha=0.8, linewidths=4, levels=[0.0, 0.1, 0.2, 0.4])
+    ct = ax2.contour(a_interpolated, wait_times_interpolated, F_err_interpolated, colors="k", alpha=1, linewidths=1, levels=[0.0, 0.1, 0.2, 0.4])
     # Bottom row contour labels
+    ax2.clabel(ct_white, inline=1, fontsize=11)
     clbls = ax2.clabel(ct, inline=1, fontsize=11)
+    plt.setp(clbls, path_effects=[patheffects.withStroke(linewidth=3, foreground="w")]) # Add white edge to labels
     
     ax2.set_xlabel("$a$", fontsize=labels_fs)
     
